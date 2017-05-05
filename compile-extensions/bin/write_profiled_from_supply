@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+
+
+$LOAD_PATH << File.expand_path('../../lib', __FILE__)
+
+require 'env_builder'
+require 'fileutils'
+
+deps_dir = ARGV[0]
+build_dir = ARGV[1]
+profiled_dir = File.join(build_dir, '.profile.d')
+
+if deps_dir && File.exist?(deps_dir)
+  FileUtils.mkdir_p(profiled_dir)
+
+  builder = EnvBuilder.new(deps_dir, '$DEPS_DIR')
+
+  script_contents = ""
+
+  if builder.path != ""
+    script_contents += "export PATH=\"#{builder.path}:$PATH\"\n"
+  end
+
+  if builder.ld_library_path != ""
+    script_contents += "export LD_LIBRARY_PATH=\"#{builder.ld_library_path}:$LD_LIBRARY_PATH\"\n"
+  end
+
+  File.write(File.join(profiled_dir, '000-multi-supply.sh'), script_contents) if script_contents != ""
+
+  builder.copy_profile_d_scripts(build_dir)
+end
